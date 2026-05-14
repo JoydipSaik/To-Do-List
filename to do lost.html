@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Task Dashboard</title>
+  <style>
+    :root{
+      --coral:#ff6f6b;
+      --muted:#9aa8b3;
+      --card-bg:#f6f9fb;
+      --white:#ffffff;
+      --shadow: 0 6px 20px rgba(16,32,56,0.06);
+      --glass: rgba(255,255,255,0.7);
+      --blue:#3b82f6;
+      --green:#16a34a;
+      --red:#ef4444;
+      --gray-100:#f3f6f9;
+      font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+        Roboto, "Helvetica Neue", Arial;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background: linear-gradient(180deg,#f5f8fb 0%, #eef4f7 100%);
+      color:#1f2937;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    /* Container layout */
+    .app{
+      display:flex;
+      min-height:100vh;
+      gap:28px;
+      padding:28px;
+    }
+
+    /* Sidebar */
+    .sidebar{
+      width:260px;
+      background: linear-gradient(180deg,var(--coral), #ff7f7a);
+      color:#fff;
+      border-radius:12px;
+      padding:22px;
+      box-shadow: var(--shadow);
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+    }
+    .profile{
+      display:flex;
+      gap:14px;
+      align-items:center;
+    }
+    .avatar{
+      width:64px;
+      height:64px;
+      border-radius:50%;
+      background:#fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"></svg>') center/cover;
+      border:3px solid rgba(255,255,255,0.22);
+    }
+    .profile h4{margin:0;font-size:16px;font-weight:600}
+    .profile p{margin:0;font-size:12px;opacity:0.95}
+
+    .menu{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      padding-top:6px;
+    }
+    .menu button{
+      text-align:left;
+      padding:12px 14px;
+      border-radius:10px;
+      background: rgba(255,255,255,0.08);
+      color:#fff;
+      border:none;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      cursor:pointer;
+      font-weight:600;
+      font-size:14px;
+    }
+    .menu button.active{
+      background:var(--white);
+      color:var(--coral);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+    .menu .small{font-weight:500;opacity:0.95;font-size:13px}
+    .logout{
+      margin-top:auto;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      color:#fff;
+      cursor:pointer;
+      font-weight:600;
+    }
+
+    /* Main area */
+    .main{
+      flex:1;
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      gap:18px;
+      justify-content:space-between;
+      background:transparent;
+    }
+    .search{
+      flex:1;
+      margin:0 24px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 14px;
+      background:var(--white);
+      border-radius:12px;
+      box-shadow: var(--shadow);
+    }
+    .search input{
+      border:0;outline:0;font-size:14px;width:100%;
+    }
+    .icons{display:flex;gap:10px;align-items:center}
+    .iconbtn{
+      width:44px;height:44px;border-radius:10px;background:var(--card-bg);display:flex;align-items:center;justify-content:center;border:0;cursor:pointer;
+      box-shadow: 0 6px 14px rgba(16,32,56,0.05);
+    }
+
+    /* Dashboard content area */
+    .content{
+      display:grid;
+      grid-template-columns: 1fr 360px;
+      gap:18px;
+      align-items:start;
+      min-height:0;
+    }
+
+    /* Center column */
+    .panel{
+      background:var(--card-bg);
+      border-radius:12px;
+      padding:18px;
+      box-shadow: var(--shadow);
+    }
+    .welcome{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:12px;
+    }
+    .welcome h2{margin:0;font-size:28px}
+    .avatars{display:flex;gap:-10px;align-items:center}
+    .avatar-sm{width:36px;height:36px;border-radius:50%;border:3px solid #fff;box-shadow:0 4px 12px rgba(16,32,56,0.08)}
+
+    .todo-list{display:flex;flex-direction:column;gap:14px;margin-top:10px}
+
+    .task-card{
+      background:var(--white);
+      border-radius:10px;
+      padding:14px;
+      box-shadow: 0 6px 18px rgba(16,32,56,0.04);
+      display:grid;
+      grid-template-columns: 1fr 90px;
+      gap:12px;
+      align-items:center;
+      border:1px solid rgba(15,23,42,0.04);
+    }
+    .task-card .title{font-weight:700;margin-bottom:8px}
+    .task-card .desc{font-size:13px;color:var(--muted);margin-bottom:6px}
+    .meta{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+    .priority{padding:6px 8px;border-radius:999px;font-weight:600;font-size:12px}
+    .prio-high{background:#fff0f0;color:var(--red);border:1px solid rgba(239,68,68,0.08)}
+    .prio-mod{background:#f0fbff;color:var(--blue);border:1px solid rgba(59,130,246,0.06)}
+    .status{padding:6px 8px;border-radius:8px;font-weight:700;font-size:12px}
+    .status.not{background:#fff4f4;color:var(--red);border:1px solid rgba(239,68,68,0.06)}
+    .status.inp{background:#f0f6ff;color:var(--blue);border:1px solid rgba(59,130,246,0.06)}
+    .status.done{background:#f0fff4;color:var(--green);border:1px solid rgba(16,163,82,0.06)}
+
+    .task-thumb{width:90px;height:62px;border-radius:8px;background:#e8eef4;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
+
+    /* Right column */
+    .right-col{display:flex;flex-direction:column;gap:12px}
+
+    .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .stat-card{background:var(--white);border-radius:12px;padding:12px;box-shadow:var(--shadow);min-height:140px}
+
+    .donut{
+      width:120px;height:120px;display:inline-block;
+      position:relative;
+      margin-right:12px;
+    }
+    .donut svg{transform: rotate(-90deg);}
+    .donut .label{
+      position:absolute;left:0;top:50%;transform:translateY(-50%);width:100%;text-align:center;font-weight:700;font-size:20px
+    }
+
+    .stat-row{display:flex;gap:14px;align-items:center}
+
+    .completed-list{display:flex;flex-direction:column;gap:12px}
+    .small-card{background:var(--card-bg);border-radius:10px;padding:10px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .small-card .left{display:flex;gap:12px;align-items:center}
+    .small-card .thumb{width:56px;height:46px;border-radius:8px;background:#fff;box-shadow:0 6px 12px rgba(16,32,56,0.03);display:flex;align-items:center;justify-content:center;color:var(--muted)}
+
+    /* Add task area */
+    .add-task{
+      margin-top:8px;
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .add-task input, .add-task select{
+      padding:10px;border-radius:10px;border:1px solid rgba(15,23,42,0.06);outline:none;font-size:14px;background:var(--white)
+    }
+    .btn{
+      padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer;background:var(--coral);color:#fff
+    }
+    .btn.secondary{background:transparent;border:1px solid rgba(15,23,42,0.06);color:#334155}
+
+    /* responsive */
+    @media (max-width:980px){
+      .content{grid-template-columns:1fr; }
+      .sidebar{display:none}
+      .main{padding:0}
+    }
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar" aria-label="Sidebar">
+      <div class="profile">
+        <div class="avatar" id="avatar"></div>
+        <div>
+          <h4>Sundar Gurung</h4>
+          <p style="opacity:0.88">sundargurung360@gmail.com</p>
+        </div>
+      </div>
+
+      <div class="menu">
+        <button class="active">Dashboard</button>
+        <button>Vital Task</button>
+        <button>My Task</button>
+        <button>Task Categories</button>
+        <button>Settings</button>
+        <button>Help</button>
+      </div>
+
+      <div class="logout">
+        <svg width="18" viewBox="0 0 24 24" fill="none"><path d="M16 17L21 12L16 7" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Logout
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <div class="topbar">
+        <div style="display:flex;align-items:center;gap:16px">
+          <h1 style="margin:0;color:var(--coral);font-size:22px">Dash<b style="color:#111">board</b></h1>
+          <div class="search">
+            <svg width="18" viewBox="0 0 24 24" fill="none"><path d="M21 21L15 15" stroke="#c8d1d9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11" cy="11" r="6" stroke="#c8d1d9" stroke-width="1.6"/></svg>
+            <input id="search" placeholder="Search your task here..." />
+            <button class="iconbtn" title="Search"><svg width="16" viewBox="0 0 24 24" fill="none"><path d="M21 21L15 15" stroke="#ff6f6b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11" cy="11" r="6" stroke="#ff6f6b" stroke-width="1.6"/></svg></button>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="icons">
+            <button class="iconbtn" title="Notifications">
+              <svg width="16" viewBox="0 0 24 24" fill="none"><path d="M15 17H9" stroke="#ff6f6b" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+            <div style="text-align:right">
+              <div style="font-size:12px;color:var(--muted)">Tuesday</div>
+              <div style="font-weight:700;color:#0f172a">20/06/2023</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="content">
+        <!-- left / main column -->
+        <div>
+          <div class="panel">
+            <div class="welcome">
+              <div>
+                <h2>Welcome back, Sundar 👋</h2>
+                <div style="color:var(--muted);margin-top:6px">Your tasks and project overview</div>
+              </div>
+              <div class="avatars">
+                <img class="avatar-sm" src="" alt="a1" />
+                <img class="avatar-sm" src="" alt="a2" />
+                <img class="avatar-sm" src="" alt="a3" />
+              </div>
+            </div>
+
+            <!-- To-Do header -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div style="display:flex;flex-direction:column">
+                <div style="color:var(--coral);font-weight:800">To-Do</div>
+                <div style="color:var(--muted);font-size:13px">20 June • Today</div>
+              </div>
+              <div>
+                <button class="btn" id="openAdd">+ Add task</button>
+              </div>
+            </div>
+
+            <!-- Add Task Inline -->
+            <div id="addForm" style="display:none;margin-bottom:12px">
+              <div class="add-task">
+                <input id="tTitle" placeholder="Task title" style="flex:1" />
+                <select id="tPriority">
+                  <option value="Moderate">Moderate</option>
+                  <option value="High">High</option>
+                  <option value="Low">Low</option>
+                </select>
+                <select id="tStatus">
+                  <option value="Not Started">Not Started</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                </select>
+                <button class="btn" id="addTaskBtn">Add</button>
+                <button class="btn secondary" id="cancelAdd">Cancel</button>
+              </div>
+            </div>
+
+            <!-- To-Do list -->
+            <div class="todo-list" id="todoList" aria-live="polite">
+              <!-- tasks injected by JS -->
+            </div>
+          </div>
+
+          <!-- extra bottom panel with sample content -->
+          <div style="margin-top:14px" class="panel">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <h3 style="margin:0">Presentation & Notes</h3>
+              <div style="font-size:13px;color:var(--muted)">3 items</div>
+            </div>
+            <div style="margin-top:12px;color:var(--muted)">Keep an eye on deadlines and ensure the final deliverables are ready for the client review.</div>
+          </div>
+        </div>
+
+        <!-- right column -->
+        <aside class="right-col">
+          <div class="stat-card">
+            <div class="card-header">
+              <div style="font-weight:800;color:var(--coral)">Task Status</div>
+              <div style="color:var(--muted);font-size:13px">Overview</div>
+            </div>
+
+            <div class="stat-row" id="donutRow">
+              <!-- donuts inserted via JS -->
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="card-header">
+              <div style="font-weight:800;color:var(--coral)">Completed Task</div>
+            </div>
+            <div class="completed-list" id="completedList">
+              <!-- completed tasks -->
+            </div>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+<script>
+  // --- Data model for demo tasks ---
+  const tasks = [
+    { id:1, title: "Attend Nischal's Birthday Party", desc:"Buy gifts on the way and pick up cake from the bakery.", priority:"Moderate", status:"Not Started", created:"20/06/2023"},
+    { id:2, title: "Landing Page Design for TravelDays", desc:"Get the work done by EOD and discuss with client before leaving.", priority:"Moderate", status:"In Progress", created:"20/06/2023"},
+    { id:3, title: "Presentation on Final Product", desc:"Make sure everything is functioning and all necessities are met.", priority:"Moderate", status:"In Progress", created:"19/06/2023"},
+    { id:4, title: "Walk the dog", desc:"Take the dog to the park and bring treats.", priority:"Low", status:"Completed", created:"18/06/2023"},
+    { id:5, title: "Conduct meeting", desc:"Meet with the client and finalize requirements.", priority:"Low", status:"Completed", created:"18/06/2023"}
+  ];
+
+  // Utility: create DOM for a task card
+  function makeTaskCard(task){
+    const wrap = document.createElement('div');
+    wrap.className = 'task-card';
+    wrap.dataset.id = task.id;
+
+    // left side (text)
+    const left = document.createElement('div');
+    const title = document.createElement('div');
+    title.className = 'title';
+    title.textContent = task.title;
+    const desc = document.createElement('div');
+    desc.className = 'desc';
+    desc.textContent = task.desc;
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    const prio = document.createElement('div');
+    prio.className = 'priority ' + (task.priority === 'High' ? 'prio-high' : 'prio-mod');
+    prio.textContent = 'Priority: ' + task.priority;
+    const status = document.createElement('div');
+    status.className = 'status ' + (task.status === 'Completed' ? 'done' : task.status === 'In Progress' ? 'inp' : 'not');
+    status.textContent = task.status;
+
+    meta.appendChild(prio);
+    meta.appendChild(status);
+
+    left.appendChild(title);
+    left.appendChild(desc);
+    left.appendChild(meta);
+
+    // right side
+    const right = document.createElement('div');
+    const thumb = document.createElement('div');
+    thumb.className = 'task-thumb';
+    thumb.textContent = (task.title.length>18 ? task.title.slice(0,18)+'…' : task.title);
+
+    // small action buttons
+    const actions = document.createElement('div');
+    actions.style.display = 'flex';
+    actions.style.flexDirection = 'column';
+    actions.style.gap = '6px';
+    actions.style.alignItems = 'flex-end';
+    actions.style.justifyContent = 'center';
+
+    const toggle = document.createElement('button');
+    toggle.className = 'btn secondary';
+    toggle.textContent = task.status === 'Completed' ? 'Undo' : 'Done';
+    toggle.onclick = () => toggleComplete(task.id);
+
+    const del = document.createElement('button');
+    del.className = 'btn secondary';
+    del.textContent = 'Delete';
+    del.onclick = () => deleteTask(task.id);
+
+    actions.appendChild(toggle);
+    actions.appendChild(del);
+
+    right.appendChild(thumb);
+    right.appendChild(actions);
+
+    wrap.appendChild(left);
+    wrap.appendChild(right);
+
+    return wrap;
+  }
+
+  function renderList(){
+    const container = document.getElementById('todoList');
+    container.innerHTML = '';
+    // show tasks that are not "Completed" first or as in original order
+    const order = tasks.slice().sort((a,b)=>{
+      // keep created order by id for demo; but place completed lower
+      if(a.status==='Completed' && b.status!=='Completed') return 1;
+      if(b.status==='Completed' && a.status!=='Completed') return -1;
+      return a.id - b.id;
+    });
+
+    order.forEach(t => {
+      if(t.status !== 'Completed'){
+        container.appendChild(makeTaskCard(t));
+      }
+    });
+
+    // add smaller cards for completed tasks inline at bottom of main panel
+    const completedContainer = document.getElementById('completedList');
+    completedContainer.innerHTML = '';
+    tasks.filter(t=>t.status==='Completed').forEach(t=>{
+      const sc = document.createElement('div');
+      sc.className = 'small-card';
+      const left = document.createElement('div'); left.className='left';
+      const thumb = document.createElement('div'); thumb.className='thumb'; thumb.textContent = 'IMG';
+      const title = document.createElement('div'); title.style.fontWeight='700'; title.textContent = t.title;
+      const stat = document.createElement('div'); stat.style.fontSize='12px'; stat.style.color='var(--muted)'; stat.textContent='Completed';
+      left.appendChild(thumb);
+      const col = document.createElement('div'); col.appendChild(title); col.appendChild(stat);
+      left.appendChild(col);
+      const right = document.createElement('div');
+      right.appendChild(document.createElement('div')); // placeholder
+      sc.appendChild(left);
+      sc.appendChild(right);
+      completedContainer.appendChild(sc);
+    });
+
+    updateDonuts();
+  }
+
+  // --- Donut charts (completed / in-progress / not started) ---
+  function calcStatusCounts(){
+    const counts = {completed:0, inprogress:0, notstarted:0};
+    tasks.forEach(t=>{
+      if(t.status==='Completed') counts.completed++;
+      else if(t.status==='In Progress') counts.inprogress++;
+      else counts.notstarted++;
+    });
+    counts.total = tasks.length;
+    // percentages (rounded)
+    counts.pCompleted = counts.total ? Math.round((counts.completed/counts.total)*100) : 0;
+    counts.pIn = counts.total ? Math.round((counts.inprogress/counts.total)*100) : 0;
+    counts.pNot = counts.total ? Math.round((counts.notstarted/counts.total)*100) : 0;
+    return counts;
+  }
+
+  function makeDonut(percentage, color, label){
+    // SVG donut with stroke-dasharray
+    const size = 120;
+    const r = 52; // radius
+    const c = 2 * Math.PI * r;
+    const filled = (percentage/100) * c;
+    const gap = c - filled;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'donut';
+    wrapper.innerHTML = `
+      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true">
+        <defs>
+          <linearGradient id="g${Math.random().toString(36).slice(2,7)}" x1="0" x2="1">
+            <stop offset="0%" stop-color="${color}" stop-opacity="1"/>
+            <stop offset="100%" stop-color="${color}" stop-opacity="0.9"/>
+          </linearGradient>
+        </defs>
+        <g transform="translate(${size/2},${size/2})">
+          <circle r="${r}" cx="0" cy="0" stroke="#edf2f7" stroke-width="14" fill="none"></circle>
+          <circle r="${r}" cx="0" cy="0" stroke="url(#g0)" stroke-width="14" fill="none" stroke-linecap="round" 
+            stroke-dasharray="${filled} ${gap}" stroke-dashoffset="0" style="stroke: ${color}"></circle>
+        </g>
+      </svg>
+      <div class="label"><div>${percentage}%</div><div style="font-size:12px;color:var(--muted);font-weight:600">${label}</div></div>
+    `;
+    return wrapper;
+  }
+
+  function updateDonuts(){
+    const container = document.getElementById('donutRow');
+    container.innerHTML = '';
+    const counts = calcStatusCounts();
+
+    const d1 = makeDonut(counts.pCompleted, 'var(--green)', 'Completed');
+    const d2 = makeDonut(counts.pIn, 'var(--blue)', 'In Progress');
+    const d3 = makeDonut(counts.pNot, 'var(--red)', 'Not Started');
+
+    // small key below each donut
+    [d1,d2,d3].forEach(d => {
+      d.style.flex='1';
+      container.appendChild(d);
+    });
+
+    // also show small legend text
+    // (optionally below)
+  }
+
+  // --- CRUD actions (in-memory) ---
+  function toggleComplete(id){
+    const t = tasks.find(x=>x.id===id);
+    if(!t) return;
+    t.status = t.status === 'Completed' ? 'Not Started' : 'Completed';
+    renderList();
+  }
+  function deleteTask(id){
+    const idx = tasks.findIndex(x=>x.id===id);
+    if(idx>-1){
+      tasks.splice(idx,1);
+      renderList();
+    }
+  }
+
+  // add new task
+  let nextId = tasks.length + 1;
+  document.getElementById('openAdd').addEventListener('click', ()=>{
+    document.getElementById('addForm').style.display = 'block';
+    document.getElementById('tTitle').focus();
+  });
+  document.getElementById('cancelAdd').addEventListener('click', ()=>{
+    document.getElementById('addForm').style.display = 'none';
+  });
+  document.getElementById('addTaskBtn').addEventListener('click', ()=>{
+    const title = document.getElementById('tTitle').value.trim();
+    const priority = document.getElementById('tPriority').value;
+    const status = document.getElementById('tStatus').value;
+    if(!title) { alert('Please add a title'); return; }
+    const newTask = { id: nextId++, title, desc:'', priority, status, created: new Date().toLocaleDateString() };
+    tasks.unshift(newTask);
+    document.getElementById('tTitle').value = '';
+    document.getElementById('addForm').style.display = 'none';
+    renderList();
+  });
+
+  // search filter (simple)
+  document.getElementById('search').addEventListener('input', (e)=>{
+    const q = e.target.value.trim().toLowerCase();
+    const list = document.getElementById('todoList');
+    const cards = list.querySelectorAll('.task-card');
+    cards.forEach(card=>{
+      const id = +card.dataset.id;
+      const t = tasks.find(x=>x.id===id);
+      if(!t) return;
+      const matches = t.title.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q);
+      card.style.display = matches ? '' : 'none';
+    });
+  });
+
+  // initial render
+  renderList();
+
+  // small cosmetic: add images to avatar-sm
+  Array.from(document.querySelectorAll('.avatar-sm')).forEach((el,i)=>{
+    el.src = `https://picsum.photos/seed/avatar${i}/80/80`;
+  });
+
+  // create an avatar background for left sidebar (circle image)
+  document.getElementById('avatar').style.backgroundImage = "url('https://picsum.photos/seed/sundar/120/120')";
+  document.getElementById('avatar').style.backgroundSize = 'cover';
+</script>
+</body>
+</html>
